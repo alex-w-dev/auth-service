@@ -1,31 +1,56 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { PropertyModule } from './property/property.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
-import dbConfig from './config/db.config';
-import dbConfigProduction from './config/db.config.production';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/guards/jwt-auth/jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles/roles.guard';
+import { HttpExceptionFilter } from './filters/http-exception.filter';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      expandVariables: true,
-      load: [dbConfig, dbConfigProduction],
     }),
-    PropertyModule,
     TypeOrmModule.forRootAsync({
-      useFactory:
-        process.env.NODE_ENV === 'production' ? dbConfigProduction : dbConfig,
+      useFactory: (configService: ConfigService) => {
+        console.log(configService.get('MYSQL_PORT'));
+        return {
+          type: 'mysql',
+          // прокинуть порт не забыть из миникуба : kubectl port-forward service/app-mysql 3306:3306
+          host: configService.get('MYSQL_HOST'),
+          port: configService.get('MYSQL_PORT'),
+          username: configService.get('MYSQL_USERNAME'),
+          password: configService.get('MYSQL_PASSWORD'),
+          database: configService.get('MYSQL_DATABASE'),
+          autoLoadEntities: true,
+          logging: configService.get('MYSQL_LOGGING') === 'true',
+          synchronize: true,
+        };
+      },
+      inject: [ConfigService],
     }),
     UserModule,
     AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard, //@UseGuards(JwtAuthGuard) applied on all API endppints
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}

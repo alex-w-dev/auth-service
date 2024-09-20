@@ -3,7 +3,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
-import { Repository } from 'typeorm';
+import { Repository, UpdateResult } from 'typeorm';
 
 @Injectable()
 export class UserService {
@@ -13,9 +13,12 @@ export class UserService {
     return await this.UserRepo.update({ id: userId }, { hashedRefreshToken });
   }
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto): Promise<User> {
     const user = await this.UserRepo.create(createUserDto);
-    return await this.UserRepo.save(user);
+    const savedUser = await this.UserRepo.save(user);
+    delete savedUser.password;
+    delete savedUser.hashedRefreshToken;
+    return savedUser;
   }
 
   async findByEmail(email: string) {
@@ -30,22 +33,36 @@ export class UserService {
     return `This action returns all user`;
   }
 
-  async findOne(id: number) {
+  async isUserEmailExists(email: string): Promise<boolean> {
+    return this.UserRepo.count({
+      where: { email },
+    }).then((c) => !!c);
+  }
+
+  async isUserUsernameExists(username: string): Promise<boolean> {
+    return this.UserRepo.count({
+      where: { username },
+    }).then((c) => !!c);
+  }
+
+  async findOne(id: number): Promise<User> {
     return this.UserRepo.findOne({
       where: { id },
       select: [
         'id',
-        'firstName',
-        'lastName',
+        'username',
         'avatarUrl',
+        'email',
         'hashedRefreshToken',
         'role',
       ],
     });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
+    await this.UserRepo.update(id, updateUserDto);
+
+    return this.findOne(id);
   }
 
   remove(id: number) {

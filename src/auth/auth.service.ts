@@ -1,4 +1,9 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { compare } from 'bcrypt';
 import { UserService } from 'src/user/user.service';
@@ -20,8 +25,10 @@ export class AuthService {
 
   async validateUser(email: string, password: string) {
     const user = await this.userService.findByEmail(email);
-    if (!user) throw new UnauthorizedException('User not found!');
+    if (!user) throw new NotFoundException('User not found!');
+    console.log(password, user.password);
     const isPasswordMatch = await compare(password, user.password);
+
     if (!isPasswordMatch)
       throw new UnauthorizedException('Invalid credentials');
 
@@ -66,6 +73,7 @@ export class AuthService {
 
   async validateRefreshToken(userId: number, refreshToken: string) {
     const user = await this.userService.findOne(userId);
+    console.log(user);
     if (!user || !user.hashedRefreshToken)
       throw new UnauthorizedException('Invalid Refresh Token');
 

@@ -23,7 +23,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
       request.url,
       'message: ',
       exception.message,
-      request.headers,
     );
 
     response.status(status).json({

@@ -9,6 +9,7 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/guards/jwt-auth/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles/roles.guard';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
+import { RabbitMqModule } from './rabbit-mq/rabbit-mq.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { HttpExceptionFilter } from './filters/http-exception.filter';
     }),
     UserModule,
     AuthModule,
+    RabbitMqModule,
   ],
   controllers: [AppController],
   providers: [

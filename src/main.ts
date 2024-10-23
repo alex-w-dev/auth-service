@@ -5,6 +5,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
+  if (!process.env.APP_MODULE) {
+    throw new Error('APP_MODULE is not set');
+  }
+
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(
     new ValidationPipe({
@@ -23,6 +27,9 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   const configService = app.get(ConfigService);
+
+  console.log(configService.get('PORT'));
+  console.log('port');
 
   await app.listen(configService.get('PORT') || 3000);
 }

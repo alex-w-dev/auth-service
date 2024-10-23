@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 
 import * as bcrypt from 'bcrypt';
-import { Role } from 'src/auth/enums/role.enum';
+import { Role } from '../auth/enums/role.enum';
 
 @Entity()
 export class User {

@@ -13,12 +13,12 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Role } from 'src/auth/enums/role.enum';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { Public } from 'src/auth/decorators/public.decorator';
-import { User } from 'src/entities/user.entity';
-import { RequestUser } from 'src/decorators/request-user.decorator';
+import { Role } from '../auth/enums/role.enum';
+import { User } from '../entities/user.entity';
+import { RequestUser } from '../decorators/request-user.decorator';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Public } from '../../common/decorators/public.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiBearerAuth()
 @ApiTags('user')

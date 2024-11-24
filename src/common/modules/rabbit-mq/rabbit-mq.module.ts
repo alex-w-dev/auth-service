@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { RabbitMqController } from './rabbit-mq.controller';
-import { RabbitMqService } from './rabbit-mq.service';
 import { RMQModule } from 'nestjs-rmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
@@ -68,7 +67,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     //       },
     //     }),
   ],
-  providers: [RabbitMqService],
   controllers: [RabbitMqController],
 })
 export class RabbitMqModule {}

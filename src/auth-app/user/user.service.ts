@@ -4,13 +4,25 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity';
 import { Repository, UpdateResult } from 'typeorm';
+import { RMQService } from 'nestjs-rmq';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectRepository(User) private UserRepo: Repository<User>) {}
+  constructor(
+    @InjectRepository(User) private UserRepo: Repository<User>,
+    private readonly rmqService: RMQService,
+  ) {}
 
   async updateHashedRefreshToken(userId: number, hashedRefreshToken: string) {
     return await this.UserRepo.update({ id: userId }, { hashedRefreshToken });
+  }
+
+  async createUserInfoMQ(savedUser: User): Promise<void> {
+    try {
+      await this.rmqService.notify('user-created', savedUser);
+    } catch (e) {
+      console.log(e, 'createUserInfoMQ ERROR');
+    }
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -18,6 +30,9 @@ export class UserService {
     const savedUser = await this.UserRepo.save(user);
     delete savedUser.password;
     delete savedUser.hashedRefreshToken;
+
+    await this.createUserInfoMQ(savedUser);
+
     return savedUser;
   }
 

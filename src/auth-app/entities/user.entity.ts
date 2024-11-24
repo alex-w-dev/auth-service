@@ -9,7 +9,9 @@ import {
 import * as bcrypt from 'bcrypt';
 import { Role } from '../auth/enums/role.enum';
 
-@Entity()
+@Entity({
+  name: 'auth-service--users',
+})
 export class User {
   @PrimaryGeneratedColumn()
   id: number;

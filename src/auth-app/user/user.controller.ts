@@ -13,7 +13,7 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Role } from '../auth/enums/role.enum';
+import { Role } from '../../common/modules/auth/enums/role.enum';
 import { User } from '../entities/user.entity';
 import { RequestUser } from '../decorators/request-user.decorator';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';

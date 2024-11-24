@@ -8,5 +8,5 @@ export class BillingUser {
   userId: number;
 
   @Column({ type: 'integer' })
-  gold: number;
+  bill: number;
 }

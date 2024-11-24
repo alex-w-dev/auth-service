@@ -15,18 +15,18 @@ export class BillingAppController {
     private BillingUserRepo: Repository<BillingUser>,
   ) {}
 
-  @Public()
+  // @Public()
   @ApiParam({
     name: 'userId',
   })
-  @Get('/users/:userId/gold')
+  @Get('/users/:userId/bill')
   async getUserGold(@Param('userId') userId): Promise<number> {
     const user = await this.BillingUserRepo.findOne({
       where: {
         userId: +userId,
       },
     });
-    return user.gold;
+    return user.bill;
   }
 
   @RMQRoute('user-created', { manualAck: true })
@@ -35,7 +35,7 @@ export class BillingAppController {
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
     const user = this.BillingUserRepo.create({
-      gold: 0,
+      bill: 0,
       userId: +data.id,
     });
     await this.BillingUserRepo.save(user);

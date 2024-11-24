@@ -26,7 +26,6 @@ export class AuthService {
   async validateUser(email: string, password: string) {
     const user = await this.userService.findByEmail(email);
     if (!user) throw new NotFoundException('User not found!');
-    console.log(password, user.password);
     const isPasswordMatch = await compare(password, user.password);
 
     if (!isPasswordMatch)
@@ -73,7 +72,6 @@ export class AuthService {
 
   async validateRefreshToken(userId: number, refreshToken: string) {
     const user = await this.userService.findOne(userId);
-    console.log(user);
     if (!user || !user.hashedRefreshToken)
       throw new UnauthorizedException('Invalid Refresh Token');
 

@@ -1,10 +1,9 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ExtendedMessage, RMQMessage, RMQRoute, RMQService } from 'nestjs-rmq';
 import { BillingUser } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ApiParam, ApiTags } from '@nestjs/swagger';
-import { Public } from '../common/decorators/public.decorator';
+import { ApiTags } from '@nestjs/swagger';
 import { RequestUser } from '../common/decorators/request-user.decorator';
 import { User } from '../auth-app/entities/user.entity';
 import { TopUpBillDto } from './dto/top-up-bill.dto';
@@ -41,7 +40,6 @@ export class BillingAppController {
       .set({ bill: () => 'bill + :x' })
       .setParameter('x', body.bill)
       .execute();
-    console.log(result, 'result');
 
     return this.BillingUserRepo.findOne({
       where: {
@@ -61,7 +59,5 @@ export class BillingAppController {
     });
     await this.BillingUserRepo.save(user);
     this.rmqService.ack(msg);
-    console.log('data of user-created');
-    console.log(data);
   }
 }

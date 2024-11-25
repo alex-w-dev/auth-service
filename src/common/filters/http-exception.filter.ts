@@ -23,13 +23,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
       request.url,
       'message: ',
       exception.message,
+      exception?.getResponse(),
     );
 
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
-      message: exception.message,
+      message: exception?.getResponse() || exception.message,
     });
   }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ExtendedMessage, RMQMessage, RMQRoute, RMQService } from 'nestjs-rmq';
 import { BillingUser } from './entities/user.entity';
 import { Repository } from 'typeorm';
@@ -7,6 +7,7 @@ import { ApiParam, ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
 import { RequestUser } from '../common/decorators/request-user.decorator';
 import { User } from '../auth-app/entities/user.entity';
+import { TopUpBillDto } from './dto/top-up-bill.dto';
 
 @ApiTags('billing')
 @Controller('billing')
@@ -17,16 +18,36 @@ export class BillingAppController {
     private BillingUserRepo: Repository<BillingUser>,
   ) {}
 
-  // @Public()
   @Get('/user')
   async getUserGold(@RequestUser() requestUser: User): Promise<BillingUser> {
-    console.log('user', requestUser);
     const user = await this.BillingUserRepo.findOne({
       where: {
         userId: +requestUser.id,
       },
     });
     return user;
+  }
+
+  @Post('/user/top-up-bill')
+  async topUpUserBalance(
+    @Body() body: TopUpBillDto,
+    @RequestUser() requestUser: User,
+  ): Promise<BillingUser> {
+    const result = await this.BillingUserRepo.createQueryBuilder()
+      .update(BillingUser)
+      .where({
+        userId: requestUser.id,
+      })
+      .set({ bill: () => 'bill + :x' })
+      .setParameter('x', body.bill)
+      .execute();
+    console.log(result, 'result');
+
+    return this.BillingUserRepo.findOne({
+      where: {
+        userId: requestUser.id,
+      },
+    });
   }
 
   @RMQRoute('user-created', { manualAck: true })

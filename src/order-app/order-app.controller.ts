@@ -2,7 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { ExtendedMessage, RMQMessage, RMQRoute, RMQService } from 'nestjs-rmq';
 import { ApiTags } from '@nestjs/swagger';
 import { MakeOrderDto } from './dto/make-order.dto';
-import { OderOrder } from './entities/order.entity';
+import { OrderOrder } from './entities/order.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RequestUser } from '../common/decorators/request-user.decorator';
@@ -13,14 +13,14 @@ import { User } from '../auth-app/entities/user.entity';
 export class OrderAppController {
   constructor(
     private readonly rmqService: RMQService,
-    @InjectRepository(OderOrder) private OrderRepo: Repository<OderOrder>,
+    @InjectRepository(OrderOrder) private OrderRepo: Repository<OrderOrder>,
   ) {}
 
   @Post('user/make-order')
   async makeOrder(
     @RequestUser() requestUser: User,
     @Body() makeOrderDto: MakeOrderDto,
-  ): Promise<OderOrder> {
+  ): Promise<OrderOrder> {
     const order = await this.OrderRepo.create({
       userId: requestUser.id,
       ...makeOrderDto,
@@ -32,9 +32,10 @@ export class OrderAppController {
     return savedOrder;
   }
 
-  async createOrderInfoMQ(savedOrder: OderOrder): Promise<void> {
+  async createOrderInfoMQ(savedOrder: OrderOrder): Promise<void> {
     try {
-      await this.rmqService.notify('order-created', savedOrder);
+      await this.rmqService.notify('order-needs-to-pay', savedOrder);
+      console.log('order-needs-to-pay');
     } catch (e) {
       console.log(e, 'createOrderInfoMQ ERROR');
     }

@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ApiParam, ApiTags } from '@nestjs/swagger';
 import { Public } from '../common/decorators/public.decorator';
+import { RequestUser } from '../common/decorators/request-user.decorator';
+import { User } from '../auth-app/entities/user.entity';
 
 @ApiTags('billing')
 @Controller('billing')
@@ -16,17 +18,15 @@ export class BillingAppController {
   ) {}
 
   // @Public()
-  @ApiParam({
-    name: 'userId',
-  })
-  @Get('/users/:userId/bill')
-  async getUserGold(@Param('userId') userId): Promise<number> {
+  @Get('/user')
+  async getUserGold(@RequestUser() requestUser: User): Promise<BillingUser> {
+    console.log('user', requestUser);
     const user = await this.BillingUserRepo.findOne({
       where: {
-        userId: +userId,
+        userId: +requestUser.id,
       },
     });
-    return user.bill;
+    return user;
   }
 
   @RMQRoute('user-created', { manualAck: true })

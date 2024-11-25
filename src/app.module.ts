@@ -11,6 +11,7 @@ import { RabbitMqModule } from './common/modules/rabbit-mq/rabbit-mq.module';
 import * as path from 'path';
 import { AuthAppModule } from './auth-app/auth-app.module';
 import { BillingAppModule } from './billing-app/billing-app.module';
+import { OrderAppModule } from './order-app/order-app.module';
 
 const moduleMetadata: ModuleMetadata = {
   imports: [
@@ -65,6 +66,9 @@ switch (process.env.APP_MODULE) {
     break;
   case 'billing-app':
     moduleMetadata.imports!.push(BillingAppModule);
+    break;
+  case 'order-app':
+    moduleMetadata.imports!.push(OrderAppModule);
     break;
 }
 @Module(moduleMetadata)

@@ -34,7 +34,7 @@ $ npm run test:cov
 
 ```bash
 # build and push
-$ docker build -t proferio/homework-6:v0.0.1 .
-$ docker push proferio/homework-6:v0.0.1
+$ docker build -t proferio/homework-7:v0.0.1 .
+$ docker push proferio/homework-7:v0.0.1
 $ docker run -p 3000:8000 proferio/homework-4:v0.0.6
 ```

@@ -10,8 +10,8 @@ import { OrderOrder } from '../order-app/entities/order.entity';
 import { OrderSaga, OrderSagaData } from '../common/sagas/order.saga';
 import { catched, notify } from '../common/utils/rmq';
 
-@ApiTags('notification')
-@Controller('notification')
+@ApiTags('payment')
+@Controller('payment')
 export class PaymentAppController {
   constructor(
     private readonly rmqService: RMQService,

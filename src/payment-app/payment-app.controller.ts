@@ -8,6 +8,7 @@ import { RequestUser } from '../common/decorators/request-user.decorator';
 import { User } from '../auth-app/entities/user.entity';
 import { OrderOrder } from '../order-app/entities/order.entity';
 import { OrderSaga, OrderSagaData } from '../common/sagas/order.saga';
+import { catched, notify } from '../common/utils/rmq';
 
 @ApiTags('notification')
 @Controller('notification')
@@ -33,15 +34,14 @@ export class PaymentAppController {
     data: { order: OrderOrder },
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
-    console.log(`Catched ${OrderSaga.order.orderCreated}`);
-    const notification = await this.repo.create({
+    catched(OrderSaga.order.orderCreated, data);
+    const payment = await this.repo.create({
       userId: +data.order.userId,
       orderId: +data.order.id,
     });
-    const saved = this.repo.save(notification);
+    const saved = await this.repo.save(payment);
 
-    console.log(`Notify ${OrderSaga.payment.paymentCreated}`);
-    await this.rmqService.notify(OrderSaga.payment.paymentCreated, {
+    notify(this.rmqService, OrderSaga.payment.paymentCreated, {
       ...data,
       payment: saved,
     });
@@ -54,20 +54,23 @@ export class PaymentAppController {
     data: OrderSagaData,
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
-    console.log(`Catched ${OrderSaga.billing.paymentPayed}`);
-    const payment = await this.repo.findOne({
-      where: {
-        id: +data.payment.id,
-      },
-    });
-    payment.payed = 1;
-    const saved = await this.repo.save(payment);
+    catched(OrderSaga.billing.paymentPayed, data);
+    try {
+      const payment = await this.repo.findOne({
+        where: {
+          id: +data.payment.id,
+        },
+      });
+      payment.payed = 1;
+      const saved = await this.repo.save(payment);
 
-    console.log(`Notify ${OrderSaga.payment.paymentSuccess}`);
-    await this.rmqService.notify(OrderSaga.payment.paymentSuccess, {
-      ...data,
-      payment: saved,
-    });
+      notify(this.rmqService, OrderSaga.payment.paymentSuccess, {
+        ...data,
+        payment: saved,
+      });
+    } catch (e) {
+      console.log(e);
+    }
     this.rmqService.ack(msg);
   }
 
@@ -76,7 +79,8 @@ export class PaymentAppController {
     data: OrderSagaData,
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
-    console.log(`Catched ${OrderSaga.billing.paymentCompensated}`);
+    catched(OrderSaga.billing.paymentCompensated, data);
+
     const payment = await this.repo.findOne({
       where: {
         id: +data.payment.id,
@@ -85,11 +89,10 @@ export class PaymentAppController {
     payment.payed = 0;
     const saved = await this.repo.save(payment);
 
-    //  console.log(`Notify ${OrderSaga.payment.paymentSuccess}`);
-    //  await this.rmqService.notify(OrderSaga.payment.paymentSuccess, {
-    //    ...data,
-    //    payment: saved,
-    //  });
+    // notify(this.rmqService, OrderSaga.payment.paymentSuccess, {
+    //   ...data,
+    //   payment: saved,
+    // });
     this.rmqService.ack(msg);
   }
 
@@ -98,10 +101,9 @@ export class PaymentAppController {
     data: { payment: PaymentPayment; reason: string },
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
-    console.log(`Catched ${OrderSaga.billing.paymentRejected}`);
+    catched(OrderSaga.billing.paymentRejected, data);
     // ничего не происходит, потому что .payed = 0  по дефолту
-    console.log(`Notify ${OrderSaga.payment.paymentFailure}`);
-    await this.rmqService.notify(OrderSaga.payment.paymentFailure, data);
+    notify(this.rmqService, OrderSaga.payment.paymentFailure, data);
     this.rmqService.ack(msg);
   }
 
@@ -110,13 +112,9 @@ export class PaymentAppController {
   //   data: OrderSagaData,
   //   @RMQMessage msg: ExtendedMessage,
   // ): Promise<void> {
-  //   console.log(`Catched ${OrderSaga.comensation}`);
+  //   catched(OrderSaga.comensation, data);
+  //   notify(this.rmqService, OrderSaga.payment.paymentNeedsToCompensate, data);
 
-  //   console.log(`Notify ${OrderSaga.payment.paymentNeedsToCompensate}`);
-  //   await this.rmqService.notify(
-  //     OrderSaga.payment.paymentNeedsToCompensate,
-  //     data,
-  //   );
   //   this.rmqService.ack(msg);
   // }
 }

@@ -8,6 +8,7 @@ import { RequestUser } from '../common/decorators/request-user.decorator';
 import { User } from '../auth-app/entities/user.entity';
 import { OrderOrder } from '../order-app/entities/order.entity';
 import { OrderSaga, OrderSagaData } from '../common/sagas/order.saga';
+import { catched } from '../common/utils/rmq';
 
 @ApiTags('notification')
 @Controller('notification')
@@ -35,7 +36,7 @@ export class NotificationAppController {
     data: OrderSagaData,
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
-    console.log(`Catched ${OrderSaga.billing.paymentPayed}`);
+    catched(OrderSaga.billing.paymentPayed, data);
     const notification = await this.repo.create({
       userId: +data.order.userId,
       type: 'success',
@@ -50,7 +51,8 @@ export class NotificationAppController {
     data: OrderSagaData,
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
-    console.log(`Catched ${OrderSaga.billing.paymentRejected}`);
+    catched(OrderSaga.billing.paymentRejected, data);
+
     const notification = await this.repo.create({
       userId: +data.order.userId,
       type: 'error',
@@ -65,7 +67,8 @@ export class NotificationAppController {
     data: OrderSagaData,
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
-    console.log(`Catched ${OrderSaga.billing.paymentCompensated}`);
+    catched(OrderSaga.billing.paymentCompensated, data);
+
     const notification = await this.repo.create({
       userId: +data.order.userId,
       type: 'success',

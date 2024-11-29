@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { RequestUser } from '../common/decorators/request-user.decorator';
 import { User } from '../auth-app/entities/user.entity';
 import { OrderSaga } from '../common/sagas/order.saga';
+import { notify } from '../common/utils/rmq';
 
 @ApiTags('order')
 @Controller('order')
@@ -35,8 +36,7 @@ export class OrderAppController {
 
   async createOrderInfoMQ(savedOrder: OrderOrder): Promise<void> {
     try {
-      console.log(`Notify ${OrderSaga.order.orderCreated}`);
-      await this.rmqService.notify(OrderSaga.order.orderCreated, {
+      notify(this.rmqService, OrderSaga.order.orderCreated, {
         order: savedOrder,
       });
     } catch (e) {

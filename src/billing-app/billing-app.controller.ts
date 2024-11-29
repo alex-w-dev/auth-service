@@ -10,6 +10,7 @@ import { TopUpBillDto } from './dto/top-up-bill.dto';
 import { OrderOrder } from '../order-app/entities/order.entity';
 import { OrderSaga, OrderSagaData } from '../common/sagas/order.saga';
 import { BillingTransaction } from './entities/billing-transaction.entity';
+import { catched, notify } from '../common/utils/rmq';
 
 @ApiTags('billing')
 @Controller('billing')
@@ -72,7 +73,7 @@ export class BillingAppController {
     data: OrderSagaData,
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
-    console.log(`Catched ${OrderSaga.payment.paymentCreated}`);
+    catched(OrderSaga.payment.paymentCreated, data);
     const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();
@@ -121,17 +122,15 @@ export class BillingAppController {
   async notifyPaymentPaying(data: OrderSagaData, error?: string) {
     try {
       if (error) {
-        console.log(`Notify ${OrderSaga.billing.paymentRejected}`);
-        await this.rmqService.notify(OrderSaga.billing.paymentRejected, {
+        notify(this.rmqService, OrderSaga.billing.paymentRejected, {
           ...data,
           billing: {
             success: false,
             errorReason: error,
           },
-        } as OrderSagaData);
+        });
       } else {
-        console.log(`Notify ${OrderSaga.billing.paymentPayed}`);
-        await this.rmqService.notify(OrderSaga.billing.paymentPayed, {
+        notify(this.rmqService, OrderSaga.billing.paymentPayed, {
           ...data,
           billing: {
             success: true,
@@ -145,8 +144,7 @@ export class BillingAppController {
   }
   async notifyPaymentCompensated(data: OrderSagaData) {
     try {
-      console.log(`Notify ${OrderSaga.billing.paymentCompensated}`);
-      await this.rmqService.notify(OrderSaga.billing.paymentCompensated, {
+      notify(this.rmqService, OrderSaga.billing.paymentCompensated, {
         ...data,
         billingCompensated: true,
       } as OrderSagaData);
@@ -161,7 +159,8 @@ export class BillingAppController {
     data: OrderSagaData,
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
-    console.log(`Catched ${OrderSaga.compensation}`);
+    catched(OrderSaga.compensation, data);
+
     const queryRunner = this.dataSource.createQueryRunner();
 
     await queryRunner.connect();

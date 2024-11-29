@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RequestUser } from '../common/decorators/request-user.decorator';
 import { User } from '../auth-app/entities/user.entity';
+import { OrderSaga } from '../common/sagas/order.saga';
 
 @ApiTags('order')
 @Controller('order')
@@ -34,28 +35,30 @@ export class OrderAppController {
 
   async createOrderInfoMQ(savedOrder: OrderOrder): Promise<void> {
     try {
-      await this.rmqService.notify('order-needs-to-pay', savedOrder);
-      console.log('order-needs-to-pay');
+      console.log(`Notify ${OrderSaga.order.orderCreated}`);
+      await this.rmqService.notify(OrderSaga.order.orderCreated, {
+        order: savedOrder,
+      });
     } catch (e) {
       console.log(e, 'createOrderInfoMQ ERROR');
     }
   }
 
-  @RMQRoute('billing-order-payed', { manualAck: true })
-  async billingOrderPayedHandler(
-    data: Record<string, string>,
-    @RMQMessage msg: ExtendedMessage,
-  ): Promise<void> {
-    console.log('billing-order-payed', data);
-    this.rmqService.ack(msg);
-  }
+  // @RMQRoute('billing-order-payed', { manualAck: true })
+  // async billingOrderPayedHandler(
+  //   data: Record<string, string>,
+  //   @RMQMessage msg: ExtendedMessage,
+  // ): Promise<void> {
+  //   console.log('billing-order-payed', data);
+  //   this.rmqService.ack(msg);
+  // }
 
-  @RMQRoute('billing-order-rejected', { manualAck: true })
-  async billingOrderRejectedHandler(
-    data: Record<string, string>,
-    @RMQMessage msg: ExtendedMessage,
-  ): Promise<void> {
-    console.log('billing-order-rejected', data);
-    this.rmqService.ack(msg);
-  }
+  // @RMQRoute('billing-order-rejected', { manualAck: true })
+  // async billingOrderRejectedHandler(
+  //   data: Record<string, string>,
+  //   @RMQMessage msg: ExtendedMessage,
+  // ): Promise<void> {
+  //   console.log('billing-order-rejected', data);
+  //   this.rmqService.ack(msg);
+  // }
 }

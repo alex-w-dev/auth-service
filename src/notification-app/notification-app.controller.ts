@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { RequestUser } from '../common/decorators/request-user.decorator';
 import { User } from '../auth-app/entities/user.entity';
 import { OrderOrder } from '../order-app/entities/order.entity';
+import { OrderSaga, OrderSagaData } from '../common/sagas/order.saga';
 
 @ApiTags('notification')
 @Controller('notification')
@@ -29,34 +30,48 @@ export class NotificationAppController {
     return notifications;
   }
 
-  @RMQRoute('billing-order-payed', { manualAck: true })
+  @RMQRoute(OrderSaga.billing.paymentPayed, { manualAck: true })
   async billingOrderPayedHandler(
-    data: { order: OrderOrder },
+    data: OrderSagaData,
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
+    console.log(`Catched ${OrderSaga.billing.paymentPayed}`);
     const notification = await this.repo.create({
       userId: +data.order.userId,
       type: 'success',
       text: 'Successfully payid your order',
     });
     this.repo.save(notification);
-
-    console.log('billing-order-payed', data);
     this.rmqService.ack(msg);
   }
 
-  @RMQRoute('billing-order-rejected', { manualAck: true })
+  @RMQRoute(OrderSaga.billing.paymentRejected, { manualAck: true })
   async billingOrderRejectedHandler(
-    data: { order: OrderOrder; reason: string },
+    data: OrderSagaData,
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
+    console.log(`Catched ${OrderSaga.billing.paymentRejected}`);
     const notification = await this.repo.create({
       userId: +data.order.userId,
       type: 'error',
       text: 'Not payed your order',
     });
     this.repo.save(notification);
-    console.log('billing-order-rejected', data);
+    this.rmqService.ack(msg);
+  }
+
+  @RMQRoute(OrderSaga.billing.paymentCompensated, { manualAck: true })
+  async billingPaymentCompensatedHandler(
+    data: OrderSagaData,
+    @RMQMessage msg: ExtendedMessage,
+  ): Promise<void> {
+    console.log(`Catched ${OrderSaga.billing.paymentCompensated}`);
+    const notification = await this.repo.create({
+      userId: +data.order.userId,
+      type: 'success',
+      text: 'Your bill compensated',
+    });
+    this.repo.save(notification);
     this.rmqService.ack(msg);
   }
 }

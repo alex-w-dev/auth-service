@@ -40,6 +40,9 @@ lerna-debug.log*
 .env.auth-app
 .env.order-app
 .env.notification-app
+.env.payment-app
+.env.warehouse-app
+.env.delivery-app
 .env.billing-app
 .env.development.local
 .env.test.local

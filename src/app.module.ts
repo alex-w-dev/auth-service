@@ -13,6 +13,7 @@ import { AuthAppModule } from './auth-app/auth-app.module';
 import { BillingAppModule } from './billing-app/billing-app.module';
 import { OrderAppModule } from './order-app/order-app.module';
 import { NotificationAppModule } from './notification-app/notification-app.module';
+import { PaymentAppModule } from './payment-app/payment-app.module';
 
 const moduleMetadata: ModuleMetadata = {
   imports: [
@@ -73,6 +74,9 @@ switch (process.env.APP_MODULE) {
     break;
   case 'notification-app':
     moduleMetadata.imports!.push(NotificationAppModule);
+    break;
+  case 'payment-app':
+    moduleMetadata.imports!.push(PaymentAppModule);
     break;
 }
 @Module(moduleMetadata)

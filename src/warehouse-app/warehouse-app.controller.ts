@@ -156,7 +156,9 @@ export class WarehouseAppController {
         await queryRunner.manager.save(product);
       }
 
-      await this.WarehouseReservedProductRepo.remove(reservedProducts);
+      console.log();
+
+      await queryRunner.manager.remove(reservedProducts);
 
       await queryRunner.commitTransaction();
     } catch (err) {

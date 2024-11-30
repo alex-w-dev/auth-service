@@ -72,7 +72,7 @@ export class NotificationAppController {
     const notification = await this.repo.create({
       userId: +data.order.userId,
       type: 'success',
-      text: 'Your bill compensated',
+      text: 'Your bill is compensated',
     });
     this.repo.save(notification);
     this.rmqService.ack(msg);

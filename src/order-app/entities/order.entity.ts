@@ -18,4 +18,7 @@ export class OrderOrder {
 
   @Column({ type: 'tinyint', default: 0 })
   closed: number;
+
+  @Column({ type: 'text' })
+  data: string;
 }

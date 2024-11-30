@@ -1,3 +1,4 @@
+import { MakeOrderDto } from '../../order-app/dto/make-order.dto';
 import { OrderOrder } from '../../order-app/entities/order.entity';
 import { PaymentPayment } from '../../payment-app/entities/payment.entity';
 
@@ -26,10 +27,14 @@ export const OrderSaga = {
 
 export interface OrderSagaData {
   order: OrderOrder;
+  orderData: MakeOrderDto['data'];
   payment?: PaymentPayment;
   billing?: {
     success: boolean;
     errorReason?: string;
   };
   billingCompensated?: boolean;
+  compensation?: {
+    reason: string;
+  };
 }

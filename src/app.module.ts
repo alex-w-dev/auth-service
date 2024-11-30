@@ -14,6 +14,7 @@ import { BillingAppModule } from './billing-app/billing-app.module';
 import { OrderAppModule } from './order-app/order-app.module';
 import { NotificationAppModule } from './notification-app/notification-app.module';
 import { PaymentAppModule } from './payment-app/payment-app.module';
+import { WarehouseAppModule } from './warehouse-app/warehouse-app.module';
 
 const moduleMetadata: ModuleMetadata = {
   imports: [
@@ -77,6 +78,9 @@ switch (process.env.APP_MODULE) {
     break;
   case 'payment-app':
     moduleMetadata.imports!.push(PaymentAppModule);
+    break;
+  case 'warehouse-app':
+    moduleMetadata.imports!.push(WarehouseAppModule);
     break;
 }
 @Module(moduleMetadata)

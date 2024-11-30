@@ -7,7 +7,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RequestUser } from '../common/decorators/request-user.decorator';
 import { User } from '../auth-app/entities/user.entity';
-import { OrderSaga } from '../common/sagas/order.saga';
+import { OrderSaga, OrderSagaData } from '../common/sagas/order.saga';
 import { notify } from '../common/utils/rmq';
 
 @ApiTags('order')
@@ -25,19 +25,24 @@ export class OrderAppController {
   ): Promise<OrderOrder> {
     const order = await this.OrderRepo.create({
       userId: requestUser.id,
-      ...makeOrderDto,
+      cost: makeOrderDto.cost,
+      data: JSON.stringify(makeOrderDto.data),
     });
     const savedOrder = await this.OrderRepo.save(order);
 
-    await this.createOrderInfoMQ(savedOrder);
+    await this.createOrderInfoMQ(savedOrder, makeOrderDto.data);
 
     return savedOrder;
   }
 
-  async createOrderInfoMQ(savedOrder: OrderOrder): Promise<void> {
+  async createOrderInfoMQ(
+    savedOrder: OrderOrder,
+    orderData: OrderSagaData['orderData'],
+  ): Promise<void> {
     try {
       notify(this.rmqService, OrderSaga.order.orderCreated, {
         order: savedOrder,
+        orderData,
       });
     } catch (e) {
       console.log(e, 'createOrderInfoMQ ERROR');

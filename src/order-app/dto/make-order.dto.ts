@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber } from 'class-validator';
+import { IsNumber, IsObject } from 'class-validator';
 
 export class MakeOrderDto {
   @ApiProperty({
@@ -7,4 +7,15 @@ export class MakeOrderDto {
   })
   @IsNumber()
   cost: number;
+
+  @ApiProperty()
+  @IsObject()
+  data: {
+    products: Array<{
+      productId: string;
+      count: number;
+      cost: number;
+    }>;
+    courierTime: number;
+  };
 }

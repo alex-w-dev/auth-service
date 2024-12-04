@@ -1,4 +1,9 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity({
   name: 'order-service--orders',
@@ -6,6 +11,9 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 export class OrderOrder {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ type: 'bigint' })
+  createdAtUnixTime: number;
 
   @Column({ nullable: false, type: 'integer' })
   userId: number;
@@ -19,6 +27,6 @@ export class OrderOrder {
   @Column({ type: 'tinyint', default: 0 })
   closed: number;
 
-  @Column({ type: 'text' })
-  data: string;
+  @Column({ type: 'text', update: false })
+  jsonData: string;
 }

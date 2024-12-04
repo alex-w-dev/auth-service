@@ -99,6 +99,20 @@ export class WarehouseAppController {
           );
         }
 
+        const existsingReservedProduct =
+          await this.WarehouseReservedProductRepo.findOne({
+            where: {
+              userId: +data.order.userId,
+              orderId: +data.order.id,
+              productId: +orderProduct.productId,
+            },
+          });
+
+        if (existsingReservedProduct) {
+          // this product is reserved fro this order
+          continue;
+        }
+
         product.count -= +orderProduct.count;
         await queryRunner.manager.save(product);
 

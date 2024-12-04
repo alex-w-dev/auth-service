@@ -62,12 +62,21 @@ export class DeliveryAppController {
     await queryRunner.startTransaction('READ COMMITTED');
 
     try {
-      console.log(data.orderData.courierTime);
-      console.log(Date.now());
       if (data.orderData.courierTime < Date.now() / 1000) {
         throw new Error(
           `The courierTime ${data.orderData.courierTime} is incorrect `,
         );
+      }
+
+      let reservedCourier = await this.DeliveryReservedCourierRepo.findOne({
+        where: {
+          orderId: +data.order.id,
+        },
+      });
+
+      if (reservedCourier) {
+        // курьер для order уже забронирован
+        return;
       }
 
       // тут нужно найти курьеров для заданного промежутка вермени (+ учитывать reserved) и выбрать одногоиз них
@@ -77,7 +86,7 @@ export class DeliveryAppController {
         throw new Error(`Not found couriers for order time`);
       }
 
-      const reservedCourier = this.DeliveryReservedCourierRepo.create({
+      reservedCourier = this.DeliveryReservedCourierRepo.create({
         userId: +data.order.userId,
         orderId: +data.order.id,
         courierId: +courier.id,

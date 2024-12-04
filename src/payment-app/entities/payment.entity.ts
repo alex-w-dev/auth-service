@@ -10,7 +10,7 @@ export class PaymentPayment {
   @Column({ nullable: false, type: 'integer' })
   userId: number;
 
-  @Column({ nullable: false, type: 'integer' })
+  @Column({ unique: true, nullable: false, type: 'integer' })
   orderId: number;
 
   @Column({ type: 'integer', default: 0 })

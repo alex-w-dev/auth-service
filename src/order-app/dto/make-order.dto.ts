@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsObject } from 'class-validator';
+import { IsBoolean, IsNumber, IsObject, IsOptional } from 'class-validator';
 
 export class MakeOrderDto {
   @ApiProperty({
@@ -7,6 +7,13 @@ export class MakeOrderDto {
   })
   @IsNumber()
   cost: number;
+
+  @ApiProperty({
+    type: Boolean,
+  })
+  @IsOptional()
+  @IsBoolean()
+  doubleAccepted?: boolean;
 
   @ApiProperty()
   @IsObject()

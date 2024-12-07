@@ -16,6 +16,8 @@ import { NotificationAppModule } from './notification-app/notification-app.modul
 import { PaymentAppModule } from './payment-app/payment-app.module';
 import { WarehouseAppModule } from './warehouse-app/warehouse-app.module';
 import { DeliveryAppModule } from './delivery-app/delivery-app.module';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { MyPrometheusContriller } from './common/controllers/prometheus.controller';
 
 const moduleMetadata: ModuleMetadata = {
   imports: [
@@ -25,6 +27,10 @@ const moduleMetadata: ModuleMetadata = {
         path.join(__dirname, '../.env'),
         path.join(__dirname, `../.env.${process.env.APP_MODULE}`),
       ],
+    }),
+    PrometheusModule.register({
+      global: true,
+      controller: MyPrometheusContriller,
     }),
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService) => {

@@ -21,4 +21,7 @@ export class WarehouseReservedProduct {
 
   @Column({ type: 'integer' })
   cost: number;
+
+  @Column({ type: 'integer', default: 0 })
+  courierId: number;
 }

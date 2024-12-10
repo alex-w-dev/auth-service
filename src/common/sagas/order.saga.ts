@@ -17,6 +17,7 @@ export const OrderSaga = {
   warehouse: {
     productReserved: 'warehouse--product-reserved',
     productNotReserved: 'warehouse--product-not-reserved',
+    courierTakesOrder: 'warehouse--courier-takes-order',
   },
   courier: {
     courierReserved: 'courier--courier-reserved',
@@ -32,6 +33,9 @@ export interface OrderSagaData {
   billing?: {
     success: boolean;
     errorReason?: string;
+  };
+  courier?: {
+    id: number;
   };
   billingCompensated?: boolean;
   compensation?: {

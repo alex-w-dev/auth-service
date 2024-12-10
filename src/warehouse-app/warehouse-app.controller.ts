@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ExtendedMessage, RMQMessage, RMQRoute, RMQService } from 'nestjs-rmq';
 import { ApiTags } from '@nestjs/swagger';
 import { WarehouseReservedProduct } from './entities/warehouse-reserved-product.entity';
@@ -10,6 +10,8 @@ import { User } from '../auth-app/entities/user.entity';
 import { OrderSaga, OrderSagaData } from '../common/sagas/order.saga';
 import { catched, notify } from '../common/utils/rmq';
 import { Public } from '../common/decorators/public.decorator';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/modules/auth/enums/role.enum';
 
 @ApiTags('warehouse')
 @Controller('warehouse')
@@ -43,6 +45,8 @@ export class WarehouseAppController {
     ];
 
     await this.WarehouseProductRepo.save(products);
+
+    // await this.WarehouseReservedProductRepo.delete({});
   }
 
   @Public()
@@ -60,6 +64,65 @@ export class WarehouseAppController {
   ): Promise<WarehouseReservedProduct[]> {
     const reservedProducts = await this.WarehouseReservedProductRepo.find({
       where: { userId: requestUser.id, orderId: +orderId },
+    });
+
+    return reservedProducts;
+  }
+
+  @Roles(Role.COURIER)
+  @Get('courier/reserved-products/grouped-by-order')
+  async getReserverProducts(): Promise<WarehouseReservedProduct[]> {
+    const reservedProducts = await this.WarehouseReservedProductRepo.find({
+      where: { courierId: 0 },
+    });
+
+    const orders = reservedProducts.reduce(function (r, a) {
+      r[a.orderId] = r[a.orderId] || [];
+      r[a.orderId].push(a);
+      return r;
+    }, Object.create(null));
+
+    return orders;
+  }
+
+  @Roles(Role.COURIER)
+  @Post('courier/take-order/:orderId')
+  async courierTakeOrder(
+    @RequestUser() requestUser: User,
+    @Param('orderId') orderId: number,
+  ): Promise<WarehouseReservedProduct[]> {
+    // TODO wrap to transaction
+    const reservedProducts = await this.getOrderReservedProducts(orderId);
+
+    let userId = 0;
+    reservedProducts.forEach((product) => {
+      product.courierId = +requestUser.id;
+      userId = product.userId;
+    });
+
+    this.WarehouseReservedProductRepo.save(reservedProducts);
+
+    notify(this.rmqService, OrderSaga.warehouse.courierTakesOrder, {
+      order: {
+        // todo: save order , before it
+        id: +orderId,
+        userId: userId,
+      },
+      courier: {
+        id: +requestUser.id,
+      },
+    } as OrderSagaData);
+
+    return reservedProducts;
+  }
+
+  @Roles(Role.COURIER)
+  @Get('courier/reserved-products/:orderId')
+  async getOrderReservedProducts(
+    @Param('orderId') orderId: number,
+  ): Promise<WarehouseReservedProduct[]> {
+    const reservedProducts = await this.WarehouseReservedProductRepo.find({
+      where: { orderId: +orderId },
     });
 
     return reservedProducts;
@@ -110,6 +173,7 @@ export class WarehouseAppController {
 
         if (existsingReservedProduct) {
           // this product is reserved fro this order
+          console.log('product reserved - continue');
           continue;
         }
 
@@ -125,6 +189,7 @@ export class WarehouseAppController {
         });
 
         await queryRunner.manager.save(reservedProduct);
+        console.log('product reserved');
       }
 
       await queryRunner.commitTransaction();

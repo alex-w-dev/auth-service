@@ -14,7 +14,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { RequestUser } from '../common/decorators/request-user.decorator';
 import { User } from '../auth-app/entities/user.entity';
 import { OrderSaga, OrderSagaData } from '../common/sagas/order.saga';
-import { notify } from '../common/utils/rmq';
+import { catched, notify } from '../common/utils/rmq';
 
 @ApiTags('order')
 @Controller('order')
@@ -79,14 +79,45 @@ export class OrderAppController {
     }
   }
 
-  // @RMQRoute('billing-order-payed', { manualAck: true })
-  // async billingOrderPayedHandler(
-  //   data: Record<string, string>,
-  //   @RMQMessage msg: ExtendedMessage,
-  // ): Promise<void> {
-  //   console.log('billing-order-payed', data);
-  //   this.rmqService.ack(msg);
-  // }
+  @RMQRoute(OrderSaga.billing.paymentPayed, { manualAck: true })
+  async billingOrderPayedHandler(
+    data: OrderSagaData,
+    @RMQMessage msg: ExtendedMessage,
+  ): Promise<void> {
+    catched(OrderSaga.billing.paymentPayed, data);
+
+    const order = await this.OrderRepo.findOne({
+      where: {
+        id: +data.order.id,
+      },
+    });
+
+    order.payed = 1;
+
+    await this.OrderRepo.save(order);
+
+    this.rmqService.ack(msg);
+  }
+
+  @RMQRoute(OrderSaga.warehouse.courierTakesOrder, { manualAck: true })
+  async warehouseCourierTakesOrderHandler(
+    data: OrderSagaData,
+    @RMQMessage msg: ExtendedMessage,
+  ): Promise<void> {
+    catched(OrderSaga.warehouse.courierTakesOrder, data);
+
+    const order = await this.OrderRepo.findOne({
+      where: {
+        id: +data.order.id,
+      },
+    });
+
+    order.courierId = data.courier.id;
+
+    await this.OrderRepo.save(order);
+
+    this.rmqService.ack(msg);
+  }
 
   // @RMQRoute('billing-order-rejected', { manualAck: true })
   // async billingOrderRejectedHandler(

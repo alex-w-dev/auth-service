@@ -56,6 +56,7 @@ export class UserController {
     @Body() updateUserDto: UpdateUserDto,
     @RequestUser() user: User,
   ) {
+    console.log(user.id);
     if (user.id !== +id) {
       throw new ForbiddenException('You can update only your profile');
     }

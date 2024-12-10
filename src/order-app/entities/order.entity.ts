@@ -24,6 +24,9 @@ export class OrderOrder {
   @Column({ type: 'tinyint', default: 0 })
   payed: number;
 
+  @Column({ type: 'integer', default: 0 })
+  courierId: number;
+
   @Column({ type: 'tinyint', default: 0 })
   closed: number;
 

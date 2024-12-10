@@ -18,6 +18,7 @@ export const OrderSaga = {
     productReserved: 'warehouse--product-reserved',
     productNotReserved: 'warehouse--product-not-reserved',
     courierTakesOrder: 'warehouse--courier-takes-order',
+    courierDeliveredOrder: 'warehouse--courier-delivered-order',
   },
   courier: {
     courierReserved: 'courier--courier-reserved',

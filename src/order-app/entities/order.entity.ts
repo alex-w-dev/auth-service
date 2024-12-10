@@ -30,6 +30,9 @@ export class OrderOrder {
   @Column({ type: 'tinyint', default: 0 })
   closed: number;
 
+  @Column({ type: 'tinyint', default: 0 })
+  delivered: number;
+
   @Column({ type: 'text', update: false })
   jsonData: string;
 }

@@ -60,6 +60,21 @@ export class NotificationAppController {
     this.repo.save(notification);
     this.rmqService.ack(msg);
   }
+
+  @RMQRoute(OrderSaga.warehouse.courierDeliveredOrder, { manualAck: true })
+  async bwarehouseCourierDeliveredOrderHandler(
+    data: OrderSagaData,
+    @RMQMessage msg: ExtendedMessage,
+  ): Promise<void> {
+    catched(OrderSaga.warehouse.courierDeliveredOrder, data);
+    const notification = await this.repo.create({
+      userId: +data.order.userId,
+      type: 'success',
+      text: 'Order is delivered',
+    });
+    this.repo.save(notification);
+    this.rmqService.ack(msg);
+  }
   @RMQRoute(OrderSaga.billing.paymentRejected, { manualAck: true })
   async billingOrderRejectedHandler(
     data: OrderSagaData,

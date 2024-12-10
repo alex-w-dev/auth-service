@@ -104,12 +104,40 @@ export class WarehouseAppController {
 
     notify(this.rmqService, OrderSaga.warehouse.courierTakesOrder, {
       order: {
-        // todo: save order , before it
+        // todo: save order saga data before it and then send all data
         id: +orderId,
         userId: userId,
       },
       courier: {
         id: +requestUser.id,
+      },
+    } as OrderSagaData);
+
+    return reservedProducts;
+  }
+
+  @Roles(Role.COURIER)
+  @Post('courier/deliver-order/:orderId')
+  async courierDeliverOrder(
+    @RequestUser() requestUser: User,
+    @Param('orderId') orderId: number,
+  ): Promise<WarehouseReservedProduct[]> {
+    // TODO wrap to transaction
+    const reservedProducts = await this.getOrderReservedProducts(orderId);
+
+    let userId = 0;
+    reservedProducts.forEach((product) => {
+      product.delivered = 1;
+      userId = product.userId;
+    });
+
+    this.WarehouseReservedProductRepo.save(reservedProducts);
+
+    notify(this.rmqService, OrderSaga.warehouse.courierDeliveredOrder, {
+      order: {
+        // todo: save order saga data before it and then send all data
+        id: +orderId,
+        userId: userId,
       },
     } as OrderSagaData);
 

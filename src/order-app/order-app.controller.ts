@@ -119,6 +119,47 @@ export class OrderAppController {
     this.rmqService.ack(msg);
   }
 
+  @RMQRoute(OrderSaga.warehouse.courierDeliveredOrder, { manualAck: true })
+  async warehouseCourierDeliveredOrder(
+    data: OrderSagaData,
+    @RMQMessage msg: ExtendedMessage,
+  ): Promise<void> {
+    catched(OrderSaga.warehouse.courierDeliveredOrder, data);
+
+    const order = await this.OrderRepo.findOne({
+      where: {
+        id: +data.order.id,
+      },
+    });
+
+    order.delivered = 1;
+
+    await this.OrderRepo.save(order);
+
+    this.rmqService.ack(msg);
+  }
+
+  @RMQRoute(OrderSaga.compensation, { manualAck: true })
+  async compensatationHandler(
+    data: OrderSagaData,
+    @RMQMessage msg: ExtendedMessage,
+  ): Promise<void> {
+    catched(OrderSaga.compensation, data);
+
+    const order = await this.OrderRepo.findOne({
+      where: {
+        id: +data.order.id,
+      },
+    });
+
+    order.delivered = 0;
+    order.payed = 0;
+    order.closed = 1;
+
+    await this.OrderRepo.save(order);
+
+    this.rmqService.ack(msg);
+  }
   // @RMQRoute('billing-order-rejected', { manualAck: true })
   // async billingOrderRejectedHandler(
   //   data: Record<string, string>,

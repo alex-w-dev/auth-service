@@ -29,12 +29,12 @@ export class PaymentAppController {
     return payments;
   }
 
-  @RMQRoute(OrderSaga.order.orderCreated, { manualAck: true })
+  @RMQRoute(OrderSaga.warehouse.productReserved, { manualAck: true })
   async orderCreatedHandler(
     data: { order: OrderOrder },
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
-    catched(OrderSaga.order.orderCreated, data);
+    catched(OrderSaga.warehouse.productReserved, data);
     const payment = await this.repo.create({
       userId: +data.order.userId,
       orderId: +data.order.id,
@@ -81,13 +81,17 @@ export class PaymentAppController {
   ): Promise<void> {
     catched(OrderSaga.billing.paymentCompensated, data);
 
-    const payment = await this.repo.findOne({
-      where: {
-        id: +data.payment.id,
-      },
-    });
-    payment.payed = 0;
-    const saved = await this.repo.save(payment);
+    try {
+      const payment = await this.repo.findOne({
+        where: {
+          orderId: +data.order.id,
+        },
+      });
+      payment.payed = 0;
+      const saved = await this.repo.save(payment);
+    } catch (e) {
+      console.log(e);
+    }
 
     // notify(this.rmqService, OrderSaga.payment.paymentSuccess, {
     //   ...data,

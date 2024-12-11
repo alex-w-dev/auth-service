@@ -40,7 +40,7 @@ export class NotificationAppController {
     const notification = await this.repo.create({
       userId: +data.order.userId,
       type: 'success',
-      text: 'Successfully payid your order',
+      text: `Successfully payid your order #${data.order.id}`,
     });
     this.repo.save(notification);
     this.rmqService.ack(msg);
@@ -55,7 +55,7 @@ export class NotificationAppController {
     const notification = await this.repo.create({
       userId: +data.order.userId,
       type: 'success',
-      text: 'Courier taked order',
+      text: `Courier taked order #${data.order.id}`,
     });
     this.repo.save(notification);
     this.rmqService.ack(msg);
@@ -70,7 +70,7 @@ export class NotificationAppController {
     const notification = await this.repo.create({
       userId: +data.order.userId,
       type: 'success',
-      text: 'Order is delivered',
+      text: `Order #${data.order.id} is delivered`,
     });
     this.repo.save(notification);
     this.rmqService.ack(msg);
@@ -85,7 +85,7 @@ export class NotificationAppController {
     const notification = await this.repo.create({
       userId: +data.order.userId,
       type: 'error',
-      text: 'Not payed your order',
+      text: `Not payed your order #${data.order.id}`,
     });
     this.repo.save(notification);
     this.rmqService.ack(msg);
@@ -101,7 +101,27 @@ export class NotificationAppController {
     const notification = await this.repo.create({
       userId: +data.order.userId,
       type: 'success',
-      text: 'Your bill is compensated',
+      text:
+        'Your bill is compensated: ' +
+        (data.compensation?.reason || 'no reason'),
+    });
+    this.repo.save(notification);
+    this.rmqService.ack(msg);
+  }
+
+  @RMQRoute(OrderSaga.compensation, { manualAck: true })
+  async sagaCompensated(
+    data: OrderSagaData,
+    @RMQMessage msg: ExtendedMessage,
+  ): Promise<void> {
+    catched(OrderSaga.billing.paymentCompensated, data);
+
+    const notification = await this.repo.create({
+      userId: +data.order.userId,
+      type: 'error',
+      text:
+        `Order #${data.order.id} is closed: ` +
+        (data.compensation?.reason || 'no reason'),
     });
     this.repo.save(notification);
     this.rmqService.ack(msg);

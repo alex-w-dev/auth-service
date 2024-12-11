@@ -10,6 +10,9 @@ export class WarehouseProduct {
   @Column({ nullable: false, type: 'text' })
   name: string;
 
+  @Column({ type: 'text' })
+  imageUrl: string;
+
   @Column({ nullable: false, type: 'integer' })
   cost: number;
 

@@ -30,7 +30,7 @@ export class OrderAppController {
     @Body() makeOrderDto: MakeOrderDto,
   ): Promise<OrderOrder> {
     const orderData = JSON.stringify(makeOrderDto.data);
-    const someTimeAge = Date.now() - 600_000; //  10 minutes
+    const someTimeAge = Date.now() - 60_000; //  1 minute
     const existsingOrder = await this.OrderRepo.findOne({
       where: {
         userId: +requestUser.id,
@@ -61,6 +61,9 @@ export class OrderAppController {
     return await this.OrderRepo.find({
       where: {
         userId: +requestUser.id,
+      },
+      order: {
+        id: 'DESC',
       },
     });
   }

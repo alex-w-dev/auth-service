@@ -32,15 +32,27 @@ export class WarehouseAppController {
     const products = [
       {
         id: 1,
-        name: 'Product',
-        count: 999999,
+        name: 'Вишня',
+        imageUrl:
+          'https://images.unsplash.com/photo-1528821128474-27f963b062bf?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTJ8fGZydWl0fGVufDB8fDB8fHww',
+        count: 1000,
         cost: 100,
       },
       {
         id: 2,
-        name: 'Zero Products',
+        name: 'Яблоко',
+        imageUrl:
+          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQevdmWczucZ-LpPAMhNbG3lKuvf7vvfwH7lIQx9mRNO2N5orYWS16e4Ix4r008d8q1N3hAGLpEE6SlS629gmZeUgCtWLjWMvEP8lDE2A',
         count: 0,
         cost: 100,
+      },
+      {
+        id: 3,
+        name: 'Банан',
+        imageUrl:
+          'https://encrypted-tbn2.gstatic.com/images?q=tbn:ANd9GcRLMh2HVEwZGGHwka3GR3JuO2K3VfNbbvU1W_2f9JLo1GR9Jmb8G781_g7wtlkHGy91l4FqyxQLpJBTZophCXcJSKCXQ7zDffZzf6GoJIU',
+        count: 553,
+        cost: 1400,
       },
     ];
 
@@ -71,7 +83,7 @@ export class WarehouseAppController {
 
   @Roles(Role.COURIER)
   @Get('courier/reserved-products/grouped-by-order')
-  async getReserverProducts(): Promise<WarehouseReservedProduct[]> {
+  async getReserverProducts(): Promise<any[]> {
     const reservedProducts = await this.WarehouseReservedProductRepo.find({
       where: { courierId: 0 },
     });
@@ -82,7 +94,41 @@ export class WarehouseAppController {
       return r;
     }, Object.create(null));
 
-    return orders;
+    const preparedOreders = Object.keys(orders).map((orderId) => ({
+      orderId: +orderId,
+      products: orders[orderId],
+      cost: orders[orderId].reduce((accum, product) => {
+        return product.count * product.cost + accum;
+      }, 0),
+    }));
+
+    console.log(preparedOreders);
+
+    return preparedOreders;
+  }
+
+  @Roles(Role.COURIER)
+  @Get('courier/delivery-products/grouped-by-order')
+  async getDeliveryProducts(@RequestUser() requestUser: User): Promise<any[]> {
+    const reservedProducts = await this.WarehouseReservedProductRepo.find({
+      where: { courierId: +requestUser.id, delivered: 0 },
+    });
+
+    const orders = reservedProducts.reduce(function (r, a) {
+      r[a.orderId] = r[a.orderId] || [];
+      r[a.orderId].push(a);
+      return r;
+    }, Object.create(null));
+
+    const preparedOreders = Object.keys(orders).map((orderId) => ({
+      orderId: +orderId,
+      products: orders[orderId],
+      cost: orders[orderId].reduce((accum, product) => {
+        return product.count * product.cost + accum;
+      }, 0),
+    }));
+
+    return preparedOreders;
   }
 
   @Roles(Role.COURIER)
@@ -221,6 +267,9 @@ export class WarehouseAppController {
       }
 
       await queryRunner.commitTransaction();
+      await notify(this.rmqService, OrderSaga.warehouse.productReserved, {
+        ...data,
+      } as OrderSagaData);
     } catch (err) {
       await queryRunner.rollbackTransaction();
       await notify(this.rmqService, OrderSaga.compensation, {

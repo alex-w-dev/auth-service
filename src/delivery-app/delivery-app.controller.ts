@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ExtendedMessage, RMQMessage, RMQRoute, RMQService } from 'nestjs-rmq';
 import { ApiTags } from '@nestjs/swagger';
 import { DataSource, In, Repository } from 'typeorm';
@@ -10,6 +10,8 @@ import { catched, notify } from '../common/utils/rmq';
 import { Public } from '../common/decorators/public.decorator';
 import { DeliveryCourier } from './entities/delivery-courier.entity';
 import { DeliveryReservedCourier } from './entities/delivery-reserved-courier.entity';
+import { Roles } from '../common/decorators/roles.decorator';
+import { Role } from '../common/modules/auth/enums/role.enum';
 
 @ApiTags('delivery')
 @Controller('delivery')
@@ -49,12 +51,34 @@ export class DeliveryAppController {
     return reservedCouriers;
   }
 
+  @Roles(Role.COURIER)
+  @Post('user/cancel-delivery/:orderId')
+  async cancelDelivery(
+    @Param('orderId') orderId: number,
+  ): Promise<DeliveryReservedCourier> {
+    const reservedCourier = await this.DeliveryReservedCourierRepo.findOne({
+      where: { orderId: +orderId },
+    });
+
+    await notify(this.rmqService, OrderSaga.compensation, {
+      order: {
+        id: +orderId,
+        userId: reservedCourier.userId,
+      },
+      compensation: {
+        reason: 'User stopped delivery',
+      },
+    } as OrderSagaData);
+
+    return reservedCourier;
+  }
+
   @RMQRoute(OrderSaga.payment.paymentSuccess, { manualAck: true })
   async billingOrderPayedHandler(
     data: OrderSagaData,
     @RMQMessage msg: ExtendedMessage,
   ): Promise<void> {
-    catched(OrderSaga.order.orderCreated, data);
+    catched(OrderSaga.payment.paymentSuccess, data);
 
     const queryRunner = this.dataSource.createQueryRunner();
 
@@ -64,7 +88,7 @@ export class DeliveryAppController {
     try {
       if (data.orderData.courierTime < Date.now() / 1000) {
         throw new Error(
-          `The courierTime ${data.orderData.courierTime} is incorrect `,
+          `The courierTime ${new Date(+data.orderData.courierTime * 1000).toLocaleString().split(',')[0]} is incorrect `,
         );
       }
 

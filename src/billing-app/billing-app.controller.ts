@@ -122,11 +122,21 @@ export class BillingAppController {
   async notifyPaymentPaying(data: OrderSagaData, error?: string) {
     try {
       if (error) {
-        notify(this.rmqService, OrderSaga.billing.paymentRejected, {
+        // notify(this.rmqService, OrderSaga.billing.paymentRejected, {
+        //   ...data,
+        //   billing: {
+        //     success: false,
+        //     errorReason: error,
+        //   },
+        // });
+        notify(this.rmqService, OrderSaga.compensation, {
           ...data,
           billing: {
             success: false,
             errorReason: error,
+          },
+          compensation: {
+            reason: error,
           },
         });
       } else {
